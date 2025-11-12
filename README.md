@@ -54,11 +54,36 @@ Mit dem Firebase JS SDK ist die Dokumentation Firebase Dokumentation für das We
   - In der Seitenleiste unter "Build" bzw. "Entwickeln" den Eintrag "Authentication" auswählen
   - "Get started" bzw. "Los geht's" klicken
   - Unter dem Tab "Sign-in method" bzw. "Anmeldemethode" die gewünschten Anmeldemethoden aktivieren. Wir nehmen E-Mail/Passwort und aktivieren diese:
-    - E-Mail/Passwort auswählen
-    - "Enable" bzw. "Aktivieren" klicken
-  - Speichern
+    - "E-Mail/Passwort" Aktivieren
+    - Speichern
 
-## Firebase im Expo-Projekt verwenden
+- In diesem Projekt haben wir (noch) keine Registrierung eingebaut. Daher einen Nutzer in der Firebase-Konsole anlegen:
+
+  - Unter dem Tab "Users" bzw. "Nutzer" auf "Add user" bzw. "Nutzer hinzufügen" klicken
+  - E-Mail und Passwort eingeben
+  - "Add user" bzw. "Nutzer hinzufügen" klicken
+
+## Projekt klonen und starten
+
+- Repository klonen und in das Verzeichnis wechseln
+- `npm install` ausführen, um Abhängigkeiten zu installieren
+- Firebase-Konfiguration einrichten:
+
+  - `firebase.config.example.json` zu `firebase.config.json` kopieren
+  - Die Werte aus der Firebase-Konsole im Web-Browser in `firebase.config.json` eintragen (siehe oben):
+    - Projektübersicht
+    - App auswählen
+    - Unter "Allgemein" die Firebase-Konfiguration finden und kopieren
+
+- `npx expo start` ausführen, um den Expo-Entwicklungsserver zu starten
+- App im Emulator, Simulator oder auf dem Gerät öffnen
+- Mit dem in der Firebase-Konsole angelegten Nutzer anmelden
+
+## Weitere Bemerkungen
+
+Diese App wurde bewusst minimal gehalten, um den Fokus auf die Integration von Expo Router mit Firebase zu legen. Es gibt keine erweiterten Funktionen wie Passwort-Zurücksetzen, E-Mail-Verifizierung oder Nutzerprofile.
+
+Bei Erstellung eines eigenen Projekts mit Expo ist folgendes zu beachten:
 
 - Firebase im Projekt installieren (ist in diesem Projekt bereits geschehen):
 
@@ -68,41 +93,8 @@ Mit dem Firebase JS SDK ist die Dokumentation Firebase Dokumentation für das We
 
   - (nicht mit `npm install` wie in den Firebase-Konsolen-Anweisungen beschrieben)
 
-- Firebase im Projekt initialisieren:
+Wir verwenden `app.config.js`, um die Firebase-Konfiguration aus `firebase.config.json`. Dies ist ein alternativer Ansatz zu `.env`-Dateien und ermöglicht es, Secrets aus dem Quellcode fernzuhalten.
 
-  - Kopiere `firebase.config.example.json` zu `firebase.config.json` (steht in `.gitignore`) und trage dort die Werte aus der Firebase-Konsole ein. Diese Datei bleibt lokal und landet nicht im Repo.
-  - Alternativ kannst du die Umgebungsvariablen `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_MESSAGING_SENDER_ID` und `FIREBASE_APP_ID` setzen (z.B. im CI oder per Shell-Export). `app.config.js` liest zuerst die JSON-Datei und fällt dann auf diese Variablen zurück.
-  - `app.config.js` stellt die Werte als `extra.firebaseConfig` bereit, sodass der eigentliche App-Code keinen direkten Zugriff auf Secrets braucht.
+`expo-secure-store` wird eingesetzt, um die Benutzersitzung lokal zu speichern, damit der Benutzer angemeldet bleibt, auch wenn die App geschlossen wird. Die Verwendung ist in [`firebaseConfig.js`](firebaseConfig.js) zu sehen.
 
-  - Firebase-Module importieren und verwenden, z.B. für Firestore und Authentication:
-
-  ```js
-  import Constants from 'expo-constants';
-  import { initializeApp } from 'firebase/app';
-  import { getAuth } from 'firebase/auth';
-  import { getFirestore } from 'firebase/firestore';
-
-  const firebaseConfig =
-    Constants.expoConfig?.extra?.firebaseConfig ||
-    Constants.manifest?.extra?.firebaseConfig;
-
-  if (!firebaseConfig) {
-    throw new Error('Firebase config fehlt (extra.firebaseConfig).');
-  }
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  export { app, db, auth };
-  ```
-
-  - `expo-secure-store` für lokale Session-Speicherung installieren (siehe https://docs.expo.dev/versions/latest/sdk/securestore/), dies ist bereits im Projekt geschehen:
-
-  ```bash
-  npx expo install expo-secure-store
-  ```
-
-  - Wir verwenden `expo-secure-store`, um die Benutzersitzung lokal zu speichern, damit der Benutzer angemeldet bleibt, auch wenn die App geschlossen wird. Die Verwendung ist in [`firebaseConfig.js`](firebaseConfig.js) zu sehen.
-
-- Der Authentication-Flow in der App basiert auf den Anleitungen aus der Expo-Router-Dokumentation: https://docs.expo.dev/router/advanced/authentication/
+Der Authentication-Flow in der App basiert auf den Anleitungen aus der Expo-Router-Dokumentation: https://docs.expo.dev/router/advanced/authentication/
