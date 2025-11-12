@@ -23,8 +23,7 @@ export default function Index() {
   const { signOut, session } = useSession();
   const [todoText, setTodoText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [todos, setTodos] = useState([]);
-  const [isLoadingTodos, setIsLoadingTodos] = useState(true);
+  const [todos, setTodos] = useState(null);
 
   const isAddDisabled = !todoText.trim() || isSaving || !session?.uid;
 
@@ -56,11 +55,10 @@ export default function Index() {
   useEffect(() => {
     if (!session?.uid) {
       setTodos([]);
-      setIsLoadingTodos(false);
       return;
     }
 
-    setIsLoadingTodos(true);
+    setTodos(null);
     const todosQuery = query(
       collection(db, 'users', session.uid, 'todos'),
       orderBy('createdAt', 'desc')
@@ -74,16 +72,17 @@ export default function Index() {
           ...doc.data(),
         }));
         setTodos(nextTodos);
-        setIsLoadingTodos(false);
       },
       (error) => {
         console.error('Failed to load todos', error);
-        setIsLoadingTodos(false);
+        setTodos([]);
       }
     );
 
     return unsubscribe;
   }, [session?.uid]);
+
+  const isLoadingTodos = todos === null;
 
   return (
     <View style={styles.container}>
