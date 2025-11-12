@@ -10,10 +10,12 @@ import {
 import {
   addDoc,
   collection,
+  doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from 'firebase/firestore';
 
 import { useSession } from '../../contexts/session-context';
@@ -49,6 +51,25 @@ export default function Index() {
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleToggleTodo = async (todoId, completed) => {
+    if (!session?.uid) {
+      return;
+    }
+
+    try {
+      await updateDoc(
+        doc(db, 'users', session.uid, 'todos', todoId),
+        { completed: !completed }
+      );
+    } catch (error) {
+      console.error('Failed to toggle todo', error);
+      Alert.alert(
+        'Fehler',
+        'Der Status konnte nicht geändert werden. Bitte erneut versuchen.'
+      );
     }
   };
 
@@ -117,9 +138,28 @@ export default function Index() {
           <Text>Keine Todos vorhanden.</Text>
         ) : (
           todos.map((todo) => (
-            <View key={todo.id} style={styles.todoItem}>
-              <Text style={styles.todoText}>{todo.text}</Text>
-            </View>
+            <TouchableOpacity
+              key={todo.id}
+              style={[
+                styles.todoItem,
+                todo.completed && styles.todoItemCompleted,
+              ]}
+              onPress={() =>
+                handleToggleTodo(todo.id, todo.completed)
+              }
+            >
+              <Text
+                style={[
+                  styles.todoText,
+                  todo.completed && styles.todoTextCompleted,
+                ]}
+              >
+                {todo.text}
+              </Text>
+              <Text style={styles.todoToggle}>
+                {todo.completed ? '↺' : '✓'}
+              </Text>
+            </TouchableOpacity>
           ))
         )}
       </View>
@@ -166,6 +206,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   todoItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -174,7 +217,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     marginBottom: 8,
   },
+  todoItemCompleted: {
+    opacity: 0.7,
+  },
   todoText: {
     color: '#111827',
+  },
+  todoTextCompleted: {
+    textDecorationLine: 'line-through',
+  },
+  todoToggle: {
+    fontSize: 18,
+    paddingHorizontal: 8,
+    color: '#1f2937',
   },
 });
