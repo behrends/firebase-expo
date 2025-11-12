@@ -5,7 +5,6 @@ import {
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-import { useStorageState } from '../hooks/useStorageState';
 
 const AuthContext = createContext({
   signIn: async () => null,
@@ -13,19 +12,6 @@ const AuthContext = createContext({
   session: null,
   isLoading: false,
 });
-
-function parseSession(value) {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    console.warn('Failed to parse stored session', error);
-    return null;
-  }
-}
 
 export function useSession() {
   const value = use(AuthContext);
@@ -39,25 +25,22 @@ export function useSession() {
 }
 
 export function SessionProvider({ children }) {
-  const [[isLoading, session], setSession] =
-    useStorageState('session');
+  const [session, setSession] = useState(null);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
       setSession(
         user
-          ? JSON.stringify({
+          ? {
               uid: user.uid,
               email: user.email,
-            })
+            }
           : null
       );
       setIsAuthInitialized(true);
     });
-  }, [setSession]);
-
-  const parsedSession = parseSession(session);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -66,10 +49,9 @@ export function SessionProvider({ children }) {
           signInWithEmailAndPassword(auth, email, password),
         signOut: async () => {
           await firebaseSignOut(auth);
-          setSession(null);
         },
-        session: parsedSession,
-        isLoading: isLoading || !isAuthInitialized,
+        session,
+        isLoading: !isAuthInitialized,
       }}
     >
       {children}
