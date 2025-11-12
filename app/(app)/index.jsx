@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   StyleSheet,
@@ -10,6 +10,9 @@ import {
 import {
   addDoc,
   collection,
+  onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
 } from 'firebase/firestore';
 
@@ -20,6 +23,8 @@ export default function Index() {
   const { signOut, session } = useSession();
   const [todoText, setTodoText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [todos, setTodos] = useState([]);
+  const [isLoadingTodos, setIsLoadingTodos] = useState(true);
 
   const isAddDisabled = !todoText.trim() || isSaving || !session?.uid;
 
@@ -47,6 +52,38 @@ export default function Index() {
       setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!session?.uid) {
+      setTodos([]);
+      setIsLoadingTodos(false);
+      return;
+    }
+
+    setIsLoadingTodos(true);
+    const todosQuery = query(
+      collection(db, 'users', session.uid, 'todos'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(
+      todosQuery,
+      (snapshot) => {
+        const nextTodos = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setTodos(nextTodos);
+        setIsLoadingTodos(false);
+      },
+      (error) => {
+        console.error('Failed to load todos', error);
+        setIsLoadingTodos(false);
+      }
+    );
+
+    return unsubscribe;
+  }, [session?.uid]);
 
   return (
     <View style={styles.container}>
@@ -82,6 +119,19 @@ export default function Index() {
           </Text>
         </TouchableOpacity>
       </View>
+      <View style={styles.listContainer}>
+        {isLoadingTodos ? (
+          <Text>Todos werden geladen...</Text>
+        ) : todos.length === 0 ? (
+          <Text>Keine Todos vorhanden.</Text>
+        ) : (
+          todos.map((todo) => (
+            <View key={todo.id} style={styles.todoItem}>
+              <Text style={styles.todoText}>{todo.text}</Text>
+            </View>
+          ))
+        )}
+      </View>
     </View>
   );
 }
@@ -94,6 +144,10 @@ const styles = StyleSheet.create({
   },
   todoContainer: {
     marginTop: 24,
+    width: '80%',
+  },
+  listContainer: {
+    marginTop: 16,
     width: '80%',
   },
   input: {
@@ -118,5 +172,17 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  todoItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+    marginBottom: 8,
+  },
+  todoText: {
+    color: '#111827',
   },
 });
