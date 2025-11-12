@@ -75,7 +75,7 @@ Mit dem Firebase JS SDK ist die Dokumentation Firebase Dokumentation für das We
     - App auswählen
     - Unter "Allgemein" die Firebase-Konfiguration finden und kopieren
 
-- `npx expo start` ausführen, um den Expo-Entwicklungsserver zu starten
+- `npx expo` ausführen, um den Expo-Entwicklungsserver zu starten
 - App im Emulator, Simulator oder auf dem Gerät öffnen
 - Mit dem in der Firebase-Konsole angelegten Nutzer anmelden
 
@@ -93,8 +93,8 @@ Bei Erstellung eines eigenen Projekts mit Expo ist folgendes zu beachten:
 
   - (nicht mit `npm install` wie in den Firebase-Konsolen-Anweisungen beschrieben)
 
-Wir verwenden `app.config.js`, um die Firebase-Konfiguration aus `firebase.config.json`. Dies ist ein alternativer Ansatz zu `.env`-Dateien und ermöglicht es, Secrets aus dem Quellcode fernzuhalten.
+Wir verwenden [`app.config.js`](app.config.js), um die Firebase-Konfiguration aus `firebase.config.json` zu laden. Dies ist ein alternativer Ansatz zu `.env`-Dateien und ermöglicht es, Secrets aus dem Quellcode fernzuhalten.
 
-`expo-secure-store` wird eingesetzt, um die Benutzersitzung lokal zu speichern, damit der Benutzer angemeldet bleibt, auch wenn die App geschlossen wird. Die Verwendung ist in [`firebaseConfig.js`](firebaseConfig.js) zu sehen.
+[`expo-secure-store`](https://docs.expo.dev/versions/latest/sdk/securestore/) wird eingesetzt, um die Benutzersitzung lokal zu speichern, damit der Benutzer angemeldet bleibt, auch wenn die App geschlossen wird. Die Verwendung ist in [`firebaseConfig.js`](firebaseConfig.js) zu sehen.
 
 Der Authentication-Flow in der App basiert auf den Anleitungen aus der Expo-Router-Dokumentation: https://docs.expo.dev/router/advanced/authentication/
