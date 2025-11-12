@@ -1,3 +1,7 @@
+# Beispiel-App mit Expo und Firebase
+
+Eine minimale Todo-App, die Expo Router mit Authentication Flow und Firebase (Firestore und Authentication) verwendet.
+
 ## Vorbemerkungen
 
 Firebase hat einen großzügigen kostenlosen Tarif: https://firebase.google.com/pricing
