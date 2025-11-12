@@ -13,13 +13,10 @@ const secureStorePersistence = {
   getItem: (key) => SecureStore.getItemAsync(sanitizeKey(key)),
   setItem: (key, value) =>
     SecureStore.setItemAsync(sanitizeKey(key), value),
-  removeItem: (key) =>
-    SecureStore.deleteItemAsync(sanitizeKey(key)),
+  removeItem: (key) => SecureStore.deleteItemAsync(sanitizeKey(key)),
 };
 
-const firebaseConfig =
-  Constants.expoConfig?.extra?.firebaseConfig ||
-  Constants.manifest?.extra?.firebaseConfig;
+const firebaseConfig = Constants.expoConfig?.extra?.firebaseConfig;
 
 if (!firebaseConfig) {
   throw new Error(
