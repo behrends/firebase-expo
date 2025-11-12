@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
@@ -10,18 +11,59 @@ import {
 import { useSession } from '../contexts/session-context';
 
 export default function SignIn() {
-  const { signIn } = useSession();
+  const { signIn, isLoading } = useSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignIn = () => {
+  const mapFirebaseError = (code) => {
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'Bitte prüfe das Format deiner E-Mail-Adresse.';
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+        return 'E-Mail oder Passwort ist falsch.';
+      case 'auth/user-not-found':
+        return 'Kein Konto mit dieser E-Mail gefunden.';
+      case 'auth/too-many-requests':
+        return 'Zu viele Versuche. Bitte versuche es später erneut.';
+      default:
+        return 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.';
+    }
+  };
+
+  const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
+      setError('Bitte gib E-Mail und Passwort ein.');
       return;
     }
 
-    signIn();
-    router.replace('/');
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await signIn(email.trim(), password);
+      router.replace('/');
+    } catch (signinError) {
+      if (signinError?.code) {
+        setError(mapFirebaseError(signinError.code));
+      } else {
+        setError(
+          'Anmeldung fehlgeschlagen. Bitte versuche es erneut.'
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007aff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -44,14 +86,32 @@ export default function SignIn() {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-        <Text style={styles.buttonLabel}>Einloggen</Text>
+      {!!error && <Text style={styles.error}>{error}</Text>}
+      <TouchableOpacity
+        style={[
+          styles.button,
+          (isSubmitting || isLoading) && styles.buttonDisabled,
+        ]}
+        onPress={handleSignIn}
+        disabled={isSubmitting || isLoading}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonLabel}>Einloggen</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -78,10 +138,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   buttonLabel: {
     color: '#fff',
     fontSize: 16,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  error: {
+    color: '#d00',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });
