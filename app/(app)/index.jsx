@@ -20,7 +20,7 @@ import { useSession } from '../../contexts/session-context';
 import { db } from '../../firebaseConfig';
 
 export default function Index() {
-  const { signOut, session } = useSession();
+  const { session } = useSession();
   const [todoText, setTodoText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [todos, setTodos] = useState(null);
@@ -86,14 +86,6 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <Text
-        onPress={() => {
-          // The guard in `RootNavigator` redirects back to the sign-in screen.
-          signOut();
-        }}
-      >
-        Abmelden
-      </Text>
       <View style={styles.todoContainer}>
         <TextInput
           placeholder="Neues Todo"
@@ -138,8 +130,9 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 24,
   },
   todoContainer: {
     marginTop: 24,
