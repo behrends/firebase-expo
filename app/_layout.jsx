@@ -1,12 +1,28 @@
 import { Stack } from 'expo-router';
+import {
+  SessionProvider,
+  useSession,
+} from '../contexts/session-context';
 
 export default function Root() {
-  return <RootNavigator />;
+  return (
+    <SessionProvider>
+      <RootNavigator />
+    </SessionProvider>
+  );
 }
 function RootNavigator() {
+  const { session } = useSession();
+
   return (
     <Stack>
-      <Stack.Screen name="index" />
+      <Stack.Protected guard={!!session}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!session}>
+        <Stack.Screen name="index" />
+      </Stack.Protected>
     </Stack>
   );
 }

@@ -1,18 +1,18 @@
-import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
-import { useSession } from '../contexts/session-context';
 
-export default function SignIn() {
-  const { signIn } = useSession();
+import { useSession } from '../../contexts/session-context';
+
+export default function Index() {
+  const { signOut } = useSession();
   return (
     <View style={styles.container}>
       <Text
         onPress={() => {
-          signIn();
-          router.replace('/');
+          // The guard in `RootNavigator` redirects back to the sign-in screen.
+          signOut();
         }}
       >
-        Einloggen
+        Abmelden
       </Text>
     </View>
   );
