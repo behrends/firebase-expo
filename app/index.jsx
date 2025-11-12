@@ -10,7 +10,8 @@ import {
 import { useSession } from '../contexts/session-context';
 
 const firebaseErrorMessages = {
-  'auth/invalid-email': 'Bitte prüfe das Format deiner E-Mail-Adresse.',
+  'auth/invalid-email':
+    'Bitte prüfe das Format deiner E-Mail-Adresse.',
   'auth/invalid-credential': 'E-Mail oder Passwort ist falsch.',
   'auth/wrong-password': 'E-Mail oder Passwort ist falsch.',
   'auth/user-not-found': 'Kein Konto mit dieser E-Mail gefunden.',
@@ -63,7 +64,7 @@ export default function SignIn() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Willkommen zurück</Text>
+      <Text style={styles.title}>Todo-App mit Firebase</Text>
       <TextInput
         autoCapitalize="none"
         autoComplete="email"
@@ -84,10 +85,7 @@ export default function SignIn() {
       />
       {!!error && <Text style={styles.error}>{error}</Text>}
       <TouchableOpacity
-        style={[
-          styles.button,
-          isBusy && styles.buttonDisabled,
-        ]}
+        style={[styles.button, isBusy && styles.buttonDisabled]}
         onPress={handleSignIn}
         disabled={isBusy}
       >
