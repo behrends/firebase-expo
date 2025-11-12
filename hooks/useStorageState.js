@@ -1,12 +1,5 @@
-import { useEffect, useCallback, useReducer } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
-
-function useAsyncState(initialValue = [true, null]) {
-  return useReducer(
-    (state, action = null) => [false, action],
-    initialValue
-  );
-}
 
 export async function setStorageItemAsync(key, value) {
   if (value == null) {
@@ -17,17 +10,25 @@ export async function setStorageItemAsync(key, value) {
 }
 
 export function useStorageState(key) {
-  const [state, setState] = useAsyncState();
+  const [state, setState] = useState([true, null]);
 
   useEffect(() => {
+    let isMounted = true;
+
     SecureStore.getItemAsync(key).then((value) => {
-      setState(value);
+      if (isMounted) {
+        setState([false, value]);
+      }
     });
+
+    return () => {
+      isMounted = false;
+    };
   }, [key]);
 
   const setValue = useCallback(
     (value) => {
-      setState(value);
+      setState([false, value]);
       setStorageItemAsync(key, value);
     },
     [key]

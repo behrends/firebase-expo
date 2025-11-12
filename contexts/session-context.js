@@ -1,10 +1,4 @@
-import {
-  use,
-  createContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { use, createContext, useEffect, useState } from 'react';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -20,6 +14,19 @@ const AuthContext = createContext({
   isLoading: false,
 });
 
+function parseSession(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    console.warn('Failed to parse stored session', error);
+    return null;
+  }
+}
+
 export function useSession() {
   const value = use(AuthContext);
   if (!value) {
@@ -34,51 +41,35 @@ export function useSession() {
 export function SessionProvider({ children }) {
   const [[isLoading, session], setSession] =
     useStorageState('session');
-  const [isAuthInitializing, setIsAuthInitializing] = useState(true);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const storedUser = JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-        });
-        setSession(storedUser);
-      } else {
-        setSession(null);
-      }
-
-      setIsAuthInitializing(false);
+    return onAuthStateChanged(auth, (user) => {
+      setSession(
+        user
+          ? JSON.stringify({
+              uid: user.uid,
+              email: user.email,
+            })
+          : null
+      );
+      setIsAuthInitialized(true);
     });
-
-    return unsubscribe;
   }, [setSession]);
 
-  const parsedSession = useMemo(() => {
-    if (!session) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(session);
-    } catch (error) {
-      console.warn('Failed to parse stored session', error);
-      return null;
-    }
-  }, [session]);
+  const parsedSession = parseSession(session);
 
   return (
     <AuthContext.Provider
       value={{
-        signIn: async (email, password) => {
-          await signInWithEmailAndPassword(auth, email, password);
-        },
+        signIn: (email, password) =>
+          signInWithEmailAndPassword(auth, email, password),
         signOut: async () => {
           await firebaseSignOut(auth);
           setSession(null);
         },
         session: parsedSession,
-        isLoading: isLoading || isAuthInitializing,
+        isLoading: isLoading || !isAuthInitialized,
       }}
     >
       {children}
