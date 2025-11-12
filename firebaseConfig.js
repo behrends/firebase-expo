@@ -5,6 +5,7 @@ import {
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 
 const sanitizeKey = (key) => key.replace(/[^a-zA-Z0-9._-]/g, '_');
 
@@ -16,14 +17,15 @@ const secureStorePersistence = {
     SecureStore.deleteItemAsync(sanitizeKey(key)),
 };
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyC41HJlrJlevfkq0Lqa3jv2i4ohHTUnQWw',
-  authDomain: 'fb-expo-tif23.firebaseapp.com',
-  projectId: 'fb-expo-tif23',
-  storageBucket: 'fb-expo-tif23.firebasestorage.app',
-  messagingSenderId: '747202984030',
-  appId: '1:747202984030:web:73df70edeb61e853f01ccf',
-};
+const firebaseConfig =
+  Constants.expoConfig?.extra?.firebaseConfig ||
+  Constants.manifest?.extra?.firebaseConfig;
+
+if (!firebaseConfig) {
+  throw new Error(
+    'Firebase config is missing. Ensure extra.firebaseConfig is set in app.config.js.'
+  );
+}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);

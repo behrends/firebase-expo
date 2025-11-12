@@ -56,7 +56,7 @@ Mit dem Firebase JS SDK ist die Dokumentation Firebase Dokumentation für das We
 
 ## Firebase im Expo-Projekt verwenden
 
-- Firebase im Projekt installieren:
+- Firebase im Projekt installieren (ist in diesem Projekt bereits geschehen):
 
   ```bash
   npx expo install firebase
@@ -66,27 +66,25 @@ Mit dem Firebase JS SDK ist die Dokumentation Firebase Dokumentation für das We
 
 - Firebase im Projekt initialisieren:
 
-  - Datei für das Firebase-Konfigurationsobjekt erstellen (z.B. `firebaseConfig.js` oder `.ts` je nach Projekt, ggf. passenden Speicherort wählen)
-  - In die Datei den Code für das Firebase-Konfigurationsobjekt aus der Firebase-Konsole einfügen:
-
-  ```js
-    import { initializeApp } from 'firebase/app';
-
-    configuration
-    const firebaseConfig = {
-      apiKey: // usw.
-      // …
-    };
-
-    const app = initializeApp(firebaseConfig);
-  ```
+  - Kopiere `firebase.config.example.json` zu `firebase.config.json` (steht in `.gitignore`) und trage dort die Werte aus der Firebase-Konsole ein. Diese Datei bleibt lokal und landet nicht im Repo.
+  - Alternativ kannst du die Umgebungsvariablen `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_MESSAGING_SENDER_ID` und `FIREBASE_APP_ID` setzen (z.B. im CI oder per Shell-Export). `app.config.js` liest zuerst die JSON-Datei und fällt dann auf diese Variablen zurück.
+  - `app.config.js` stellt die Werte als `extra.firebaseConfig` bereit, sodass der eigentliche App-Code keinen direkten Zugriff auf Secrets braucht.
 
   - Firebase-Module importieren und verwenden, z.B. für Firestore und Authentication:
 
   ```js
-  import app from './firebaseConfig';
+  import Constants from 'expo-constants';
+  import { initializeApp } from 'firebase/app';
   import { getAuth } from 'firebase/auth';
   import { getFirestore } from 'firebase/firestore';
+
+  const firebaseConfig =
+    Constants.expoConfig?.extra?.firebaseConfig ||
+    Constants.manifest?.extra?.firebaseConfig;
+
+  if (!firebaseConfig) {
+    throw new Error('Firebase config fehlt (extra.firebaseConfig).');
+  }
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
@@ -95,34 +93,12 @@ Mit dem Firebase JS SDK ist die Dokumentation Firebase Dokumentation für das We
   export { app, db, auth };
   ```
 
-- Authentication in der App verwenden mit Expo Router: https://docs.expo.dev/router/advanced/authentication/
-
-- Lokales Storage in Firebase einrichten (in `firebaseConfig.js`):
-
-  - `expo-secure-store` installieren (siehe https://docs.expo.dev/versions/latest/sdk/securestore/):
+  - `expo-secure-store` für lokale Session-Speicherung installieren (siehe https://docs.expo.dev/versions/latest/sdk/securestore/), dies ist bereits im Projekt geschehen:
 
   ```bash
   npx expo install expo-secure-store
   ```
 
-  ```js
-  import { initializeApp } from 'firebase/app';
-  import {
-    initializeAuth,
-    getReactNativePersistence,
-  } from 'firebase/auth';
-  import { getFirestore } from 'firebase/firestore';
-  import * as SecureStore from 'expo-secure-store';
+  - Wir verwenden `expo-secure-store`, um die Benutzersitzung lokal zu speichern, damit der Benutzer angemeldet bleibt, auch wenn die App geschlossen wird. Die Verwendung ist in [`firebaseConfig.js`](firebaseConfig.js) zu sehen.
 
-  const firebaseConfig = {
-    apiKey: // usw.
-    // …
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(SecureStore),
-  });
-  export { app, db, auth };
-  ```
+- Der Authentication-Flow in der App basiert auf den Anleitungen aus der Expo-Router-Dokumentation: https://docs.expo.dev/router/advanced/authentication/
