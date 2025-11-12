@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { router } from 'expo-router';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -10,6 +9,18 @@ import {
 } from 'react-native';
 import { useSession } from '../contexts/session-context';
 
+const firebaseErrorMessages = {
+  'auth/invalid-email': 'Bitte prüfe das Format deiner E-Mail-Adresse.',
+  'auth/invalid-credential': 'E-Mail oder Passwort ist falsch.',
+  'auth/wrong-password': 'E-Mail oder Passwort ist falsch.',
+  'auth/user-not-found': 'Kein Konto mit dieser E-Mail gefunden.',
+  'auth/too-many-requests':
+    'Zu viele Versuche. Bitte versuche es später erneut.',
+};
+
+const defaultErrorMessage =
+  'Anmeldung fehlgeschlagen. Bitte versuche es erneut.';
+
 export default function SignIn() {
   const { signIn, isLoading } = useSession();
   const [email, setEmail] = useState('');
@@ -17,24 +28,11 @@ export default function SignIn() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const mapFirebaseError = (code) => {
-    switch (code) {
-      case 'auth/invalid-email':
-        return 'Bitte prüfe das Format deiner E-Mail-Adresse.';
-      case 'auth/invalid-credential':
-      case 'auth/wrong-password':
-        return 'E-Mail oder Passwort ist falsch.';
-      case 'auth/user-not-found':
-        return 'Kein Konto mit dieser E-Mail gefunden.';
-      case 'auth/too-many-requests':
-        return 'Zu viele Versuche. Bitte versuche es später erneut.';
-      default:
-        return 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.';
-    }
-  };
-
   const handleSignIn = async () => {
-    if (!email.trim() || !password.trim()) {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
       setError('Bitte gib E-Mail und Passwort ein.');
       return;
     }
@@ -42,20 +40,18 @@ export default function SignIn() {
     setError('');
     setIsSubmitting(true);
     try {
-      await signIn(email.trim(), password);
-      router.replace('/');
+      await signIn(trimmedEmail, trimmedPassword);
     } catch (signinError) {
-      if (signinError?.code) {
-        setError(mapFirebaseError(signinError.code));
-      } else {
-        setError(
-          'Anmeldung fehlgeschlagen. Bitte versuche es erneut.'
-        );
-      }
+      const message =
+        firebaseErrorMessages[signinError?.code] ||
+        defaultErrorMessage;
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const isBusy = isSubmitting || isLoading;
 
   if (isLoading) {
     return (
@@ -90,10 +86,10 @@ export default function SignIn() {
       <TouchableOpacity
         style={[
           styles.button,
-          (isSubmitting || isLoading) && styles.buttonDisabled,
+          isBusy && styles.buttonDisabled,
         ]}
         onPress={handleSignIn}
-        disabled={isSubmitting || isLoading}
+        disabled={isBusy}
       >
         {isSubmitting ? (
           <ActivityIndicator color="#fff" />
